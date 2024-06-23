@@ -8,7 +8,7 @@
 typedef struct casa {
   unsigned int linha, coluna;
 } casa;
-
+//
 //------------------------------------------------------------------------------
 // computa uma resposta para a instância (n,c) do problema das n rainhas 
 // com casas proibidas usando backtracking

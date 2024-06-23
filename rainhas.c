@@ -1,8 +1,24 @@
 #include "rainhas.h"
 #include <stdio.h>
+#include <stdlib.h>
 
+int ll = 1;
+int ordered = 0 ;
+int *fbd = NULL;
 
-int ll = 0;
+static int check_forbidden(int i, int j, int n){
+    return fbd[(i-1)*n + (j-1)] ;
+}
+
+static void map(casa *c, int k, unsigned int n){
+    fbd = (int *) calloc((n*n), sizeof(int)) ;
+    int i, j ;
+    for(int l = 0; l<k; l++){
+        i = (int) c[l].linha ;
+        j = (int) c[l].coluna ;
+        fbd[(i-1)*((int) n) + (j-1)] = 1 ;
+    }
+}
 
 //------------------------------------------------------------------------------
 // computa uma resposta para a instância (n,c) do problema das n rainhas 
@@ -18,15 +34,22 @@ int ll = 0;
 //
 // devolve r
 unsigned int *rainhas_bt(unsigned int n, unsigned int k, casa *c, unsigned int *r) {
-    if(ll == (int) (n)) return r ;
+    if(!fbd) map(c, (int) k, n) ;
+    if(ll > (int) (n)){
+        free(fbd) ;
+        fbd = NULL ;
+        return r ;
+    }
 
     int valid ;
-    for(int j = 0; j< (int) n; j++){
+    for(int j = 1; j<= (int) n; j++){
+        if(check_forbidden(ll, j, (int) n)) continue ;
+
         valid = 1 ;
         int aux ;
         int gap ;
-        for(aux = ll-1, gap = 1; aux >= 0; aux--, gap++){
-            if((int) r[aux]==j || (int) r[aux]==j-gap || (int) r[aux]==j+gap){
+        for(aux = ll-1, gap = 1; aux > 0; aux--, gap++){
+            if((int) r[aux-1]==j || (int) r[aux-1]==j-gap || (int) r[aux-1]==j+gap){
                 valid = 0 ;
                 break ;
             }
@@ -34,7 +57,7 @@ unsigned int *rainhas_bt(unsigned int n, unsigned int k, casa *c, unsigned int *
 
         ll++ ;
         if(valid){
-            r[ll-1] = (unsigned int) j ;
+            r[ll-2] = (unsigned int) j ;
             unsigned int *r1 = rainhas_bt(n, k, c, r) ;
             if(r1) return r1 ;
         }
