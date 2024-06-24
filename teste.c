@@ -46,10 +46,10 @@ int main (void) {
 
   unsigned int k = 2 * n;
   casa *proibido = malloc(k*sizeof(casa));
-  
+
   proibe_diagonais(n, proibido);
 
-  
+
   printf("backtracking: ");
   long int tempo_bt;
   CRONOMETRA(rainhas_bt(n, k, proibido, resposta), tempo_bt);
