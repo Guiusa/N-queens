@@ -26,9 +26,17 @@
 ┃       Algumas operações feitas em rainhas_bt são otimizações relacionadas ao ┃
 ┃ tratamento das casas proibidas e serão discutidas na próxima sessão.         ┃
 ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-┃ 2. OTIMIZAÇÕES                                                               ┃
+┃ 2. FUNÇÃO WRAPPED                                                            ┃
 ┃                                                                              ┃
-┃       2.1 CASAS PROIBIDAS                                                    ┃
+┃       A função que realiza o backtracking segue um algoritmo muito semelhante┃
+┃ ao descrito na especificação do trabalho, com algumas alterações considerando┃
+┃ a possibilidade de soluções parciais.                                        ┃
+┃       Tudo que está diferente para essa implementação específica está        ┃
+┃ explicado em comentários no próprio código.                                  ┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+┃ 3. OTIMIZAÇÕES                                                               ┃
+┃                                                                              ┃
+┃       3.1 CASAS PROIBIDAS                                                    ┃
 ┃       O modo com que as casas proibidas são recebidas pela função rainhas_bt ┃
 ┃ obriga que cada passo do backtracking realize k iterações para que se decida ┃
 ┃ se a casa é proibida ou não, ao invés disso, é possível tomar essa decisão em┃
@@ -40,14 +48,41 @@
 ┃ check_forbidden para cada casa que precisa ser checada, essa rotina acessa   ┃
 ┃ a posição correspondente na matriz e diz se uma rainha pode ou não ser       ┃
 ┃ posicionada ali.                                                             ┃
-┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-┃ 3. FUNÇÃO WRAPPED                                                            ┃
 ┃                                                                              ┃
-┃       A função que realiza o backtracking segue um algoritmo muito semelhante┃
-┃ ao descrito na especificação do trabalho, com algumas alterações considerando┃
-┃ a possibilidade de soluções parciais.                                        ┃
-┃       Tudo que está diferente para essa implementação específica está        ┃
-┃ explicado em comentários no próprio código.                                  ┃
+┃       3.2 BACKTRACKING COM PODA                                              ┃
+┃       Um galho do backtracking pode ser cortado se a solução até aquele      ┃
+┃ momento não pode superar a melhor solução já atingida. A seguinte linha do   ┃
+┃ código implementa essa ideia:                                                ┃
+┃ ```C                                                                         ┃
+┃   if((int) (n)-(ll-1) + q <= *best) return NULL ;                            ┃
+┃ ```                                                                          ┃
+┃       Se a quantidade de linhas que ainda faltam na recursão (n-ll) somada   ┃
+┃ à quantidade de rainhas já posicionadas for menor que o tamanho da melhor    ┃
+┃ solução, então aquele galho não pode ser o melhor e pode ser "podado"        ┃
+┃       Para testar se a poda funciona, um script bash foi criado para rodar o ┃
+┃ algoritmo 100 vezes e testar o tempo de resposta. O arquivo de teste solicita┃
+┃ a operação para um tabuleiro 16x16 e com a primeira linha inteira proibida,  ┃
+┃ o que gera um caso complexo porque a solução máxima tem n-1 rainhas          ┃
+┃ posicionadas.                                                                ┃
+┃       O script e os resultados estão descritos abaixo:                       ┃
+┃                                                                              ┃
+┃       3.2.1 SCRIPT                                                           ┃
+┃       ```bash                                                                ┃
+┃           summ=0                                                             ┃
+┃           for i in `seq 1 100`                                               ┃
+┃           do                                                                 ┃
+┃               out=`./teste`                                                  ┃
+┃               echo $out                                                      ┃
+┃               num=$(echo $out | grep backtracking | cut -d " " -f2)          ┃
+┃               summ=$((summ+num))                                             ┃
+┃               sleep 1                                                        ┃
+┃           done                                                               ┃
+┃           printf "%d\n" $((summ/100))                                        ┃
+┃       ```                                                                    ┃
+┃                                                                              ┃
+┃       3.2.2 RESULTADOS                                                       ┃
+┃       ┏━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━┓                                       ┃
+┃       ┃       ┃ SEM PODA  ┃ COM PODA ┃                                       ┃
+┃       ┃CLOCKS ┃ 2748892   ┃ 6567     ┃                                       ┃
+┃       ┗━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━┛                                       ┃
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-
-

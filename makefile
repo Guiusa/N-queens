@@ -1,4 +1,4 @@
-COMMON_FLAGS = -pipe \
+OMMON_FLAGS = -pipe \
 	       -ggdb3 -Wstrict-overflow=5 -fstack-protector-all \
 	       -W -Wall -Wextra \
 	       -Wcast-align \
@@ -51,10 +51,11 @@ rainhas.o teste.o teste2.o : %.o : %.c
 # 	$(CC) -c $(CPPFLAGS) -o $@ $^
 
 teste : teste.o rainhas.o
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@  $^
 
 teste2: teste2.o rainhas.o
 	$(CC) $(CFLAGS) -o $@ $^
+
 #------------------------------------------------------------------------------
 clean :
-	$(RM) teste*.o teste teste2
+	$(RM) *.o teste teste2

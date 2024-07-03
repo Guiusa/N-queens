@@ -39,13 +39,15 @@ static int *map(casa *c, int k, unsigned int n){
  *      best    tamanho da melhor solução encontrada anteriormente
  */
 static unsigned int *rainhas_bt_wrapped(unsigned int n, unsigned int *r, int ll, int *fbd, int q, unsigned int *r2, int *best) {
+    if((int) (n)-(ll-1) + q <= *best) return NULL ;
+
     // Chegou ao fim da recursão
     if(ll > (int) (n)){
         // Se posicionou n rainhas, a solução é completa e deve ser retornada
         if (q == (int) n) return r ;
 
         // Não é completa, mas é a melhor encontrada até esse ponto
-        // copia para vetor auxiliar e retorna NULL 
+        // copia para vetor auxiliar e retorna NULL
         if(q > *best){
             memcpy(r2, r, n * sizeof(unsigned int)) ;
             *best = q ;
