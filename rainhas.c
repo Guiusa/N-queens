@@ -3,6 +3,58 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct nodo {
+    unsigned int vertice;
+    struct nodo* next;
+} nodo_t;
+
+typedef struct grafo{
+    int numVertices;
+    struct nodo** listaAdj;
+} grafo_t;
+
+static nodo_t* criaNodo (int v){
+    nodo_t* nodo = malloc(sizeof(nodo_t));
+    nodo->vertice = v;
+    nodo->next = NULL;
+    return nodo;
+}
+
+static grafo_t* criaGrafo(int vertices){
+    grafo_t* grafo = malloc(sizeof(grafo_t));
+    grafo->numVertices = vertices;
+    grafo->listaAdj = malloc(vertices * sizeof(nodo_t*));
+
+    for(int i = 0; i < vertices; i++)
+        grafo->listaAdj[i] = NULL;
+
+    return grafo;
+}
+
+static grafo_t* adicionarAresta(grafo_t* grafo, int origem, int destino){
+    nodo_t* nodo = criaNodo(destino);
+    nodo->next = grafo->listaAdj[origem];
+    grafo->listaAdj[origem] =  nodo;
+
+    nodo = criaNodo(origem);
+    nodo->next = grafo->listaAdj[destino];
+    grafo->listaAdj[destino] = nodo;
+}
+
+static void printGrafo(grafo_t* grafo){
+    for(int i = 0; i < grafo->numVertices; i++){
+        nodo_t* aux = grafo->listaAdj[i];
+        printf("\n Vertice %d\n: ", i);
+        while(aux){
+            printf("%d -> ", aux->vertice);
+            aux = aux->next;
+  
+        }
+        printf("\n");
+    }
+}
+
+
 /*
  * Checa se a posição está proibida
  */
@@ -129,10 +181,17 @@ unsigned int *rainhas_bt(unsigned int n, unsigned int k, casa *c, unsigned int *
 //
 // n, c e r são como em rainhas_bt()
 unsigned int *rainhas_ci(unsigned int n, unsigned int k, casa *c, unsigned int *r) {
+    grafo_t* g = criaGrafo(4);
+    adicionarAresta(g, 0, 1);
+    adicionarAresta(g, 0, 2);
+    adicionarAresta(g, 0, 3);
+    adicionarAresta(g, 1, 2);
 
-  n = n;
-  k = k;
-  c = c;
+    printGrafo(g);
+
+    n = n;
+    k = k;
+    c = c;
 
   return r;
 }
