@@ -19,7 +19,7 @@ static int check_forbidden(int i, int j, int n, int *fbd){
 /*
  *  Mapeia o vetor de casas proibidas para uma matriz, acesso O(1)
  */
-static int *map(casa *c, int k, unsigned int n){
+static int *map(casa *c, int k, uint n){
     int *fbd = (int *) calloc((n*n), sizeof(int)) ;
     int i, j ;
     for(int l = 0; l<k; l++){
@@ -42,7 +42,13 @@ static int *map(casa *c, int k, unsigned int n){
  *      r2      vetor resposta auxiliar
  *      best    tamanho da melhor solução encontrada anteriormente
  */
-static unsigned int *rainhas_bt_wrapped(unsigned int n, unsigned int *r, int ll, int *fbd, int q, unsigned int *r2, int *best) {
+static uint *rainhas_bt_wrapped(uint n,
+                                        uint *r,
+                                        int ll,
+                                        int *fbd,
+                                        int q,
+                                        uint *r2,
+                                        int *best) {
     if((int) (n)-(ll-1) + q <= *best) return NULL ;
 
     // Chegou ao fim da recursão
@@ -53,7 +59,7 @@ static unsigned int *rainhas_bt_wrapped(unsigned int n, unsigned int *r, int ll,
         // Não é completa, mas é a melhor encontrada até esse ponto
         // copia para vetor auxiliar e retorna NULL
         if(q > *best){
-            memcpy(r2, r, n * sizeof(unsigned int)) ;
+            memcpy(r2, r, n * sizeof(uint)) ;
             *best = q ;
         }
         return NULL ;
@@ -79,8 +85,8 @@ static unsigned int *rainhas_bt_wrapped(unsigned int n, unsigned int *r, int ll,
 
         // Se a casa é válida, posiciona a rainha e chama a recursão
         if(valid){
-            r[ll-1] = (unsigned int) j ;
-            unsigned int *r1 = rainhas_bt_wrapped(n, r, ll+1, fbd, q + 1, r2, best) ;
+            r[ll-1] = (uint) j ;
+            uint *r1 = rainhas_bt_wrapped(n, r, ll+1, fbd, q + 1, r2, best) ;
             if(r1){
                 return r1 ;
             } else continue ;
@@ -109,14 +115,14 @@ static unsigned int *rainhas_bt_wrapped(unsigned int n, unsigned int *r, int ll,
 //      r[i] = 0     indica que nã0x35o há rainha nenhuma na linha i+1
 //
 // devolve r
-unsigned int *rainhas_bt(unsigned int n, unsigned int k, casa *c, unsigned int *r) {
+uint *rainhas_bt(uint n, uint k, casa *c, uint *r) {
     int ll = 1 ;
     int *fbd = map(c, (int) k, n) ;
     int best = 0 ;
-    unsigned int *r2 = (unsigned int *) calloc(n, sizeof(unsigned int)) ;
-    unsigned int *r1 = rainhas_bt_wrapped(n, r, ll, fbd, 0, r2, &best) ;
+    uint *r2 = (uint *) calloc(n, sizeof(uint)) ;
+    uint *r1 = rainhas_bt_wrapped(n, r, ll, fbd, 0, r2, &best) ;
     if(!r1){
-        memcpy(r, r2, n * sizeof(unsigned int)) ;
+        memcpy(r, r2, n * sizeof(uint)) ;
     }
     free(r2) ;
     free(fbd) ;
@@ -140,6 +146,7 @@ typedef struct nodo_t {
     struct queue_t *adj ;
     uint l, c ;
     short valid, percorrido ;
+    int vizinhos ;
 } nodo_t ;
 
 
@@ -164,7 +171,8 @@ static void print_fila(nodo_t* n){
  */
 static void print_graph(nodo_t *g, int n){
     for(int i = 0; i<n*n; i++){
-        printf("[%d][%d]", g[i].l, g[i].c) ;
+        printf("%d\t", g[i].vizinhos) ;
+        printf("\e[0;31m[%d][%d]\e[0m", g[i].l, g[i].c) ;
         print_fila(&g[i]) ;
         printf("\n") ;
     }
@@ -182,6 +190,7 @@ static nodo_t *init_nodo_t(nodo_t* nodo, uint l, uint c) {
     nodo->valid = 1 ;
     nodo->percorrido = 0 ;
     nodo->adj = NULL ;
+    nodo->vizinhos = 0 ;
     return nodo ;
 }
 //##############################################################################
@@ -243,8 +252,10 @@ static int add_by_distance(int i, int j, nodo_t* g, int d, int n){
             queue_append(nodo_aux1, queue_aux2) ;
             queue_append(nodo_aux2, queue_aux1) ;
             edges++ ;
+            nodo_aux2->vizinhos++ ;
         }
     }
+    nodo_aux1->vizinhos += edges ;
     nodo_aux1->percorrido = 1 ;
     return edges ;
 }
@@ -290,15 +301,56 @@ static void destroy_graph(nodo_t *g, int n){
 }
 //##############################################################################
 
+
+
+/*
+ *  n       tamanho do tabuleiro
+ *  r       vetor resposta
+ *  fbd     vetor de casa proibidas
+ *  q       quantia de rainhas já posicionadas
+ *  g       grafo com listas de adjacência
+ */
+static uint *rainhas_ci_wrapped(int n,
+                                uint *r,
+                                int *fbd,
+                                int q,
+                                nodo_t* g){
+    if (q==n) return r ;
+    
+    nodo_t *v;
+    for(int i = 0; i<n*n; i++){
+        if(!g[i].valid) continue ;
+        if(check_forbidden(g[i].l, g[i].c, n, fbd)) continue ;
+        v = &g[i] ;
+        break ;
+    }
+
+    queue_t *aux = v->adj ;
+    while(aux) {
+        aux->points->valid = 0 ;
+        aux = aux->next ;
+    }
+    v->valid = 0 ;
+
+    r = rainhas_ci_wrapped(n, r, fbd, q, g
+
+
+}
+
 //------------------------------------------------------------------------------
 // computa uma resposta para a instância (n,c) do problema das n
 // rainhas com casas proibidas usando a modelagem do problema como
 // conjunto independente de um grafo
 //
 // n, c e r são como em rainhas_bt()
-unsigned int *rainhas_ci(unsigned int n, unsigned int k, casa *c, unsigned int *r) {
+uint *rainhas_ci(uint n, uint k, casa *c, uint *r) {
     nodo_t* graph = init_graph((int) n) ;
+    int *fbd = map(c, (int) k, n) ;
     print_graph(graph, (int) n) ;
+
+//    rainhas_ci_wrapped(fbd, (int) n, graph) ; 
+
     destroy_graph(graph, (int) n) ;
+    free(fbd) ;
     return r;
 }
