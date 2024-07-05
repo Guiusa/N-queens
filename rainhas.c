@@ -2,58 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-typedef struct nodo {
-    unsigned int vertice;
-    struct nodo* next;
-} nodo_t;
-
-typedef struct grafo{
-    int numVertices;
-    struct nodo** listaAdj;
-} grafo_t;
-
-static nodo_t* criaNodo (int v){
-    nodo_t* nodo = malloc(sizeof(nodo_t));
-    nodo->vertice = v;
-    nodo->next = NULL;
-    return nodo;
-}
-
-static grafo_t* criaGrafo(int vertices){
-    grafo_t* grafo = malloc(sizeof(grafo_t));
-    grafo->numVertices = vertices;
-    grafo->listaAdj = malloc(vertices * sizeof(nodo_t*));
-
-    for(int i = 0; i < vertices; i++)
-        grafo->listaAdj[i] = NULL;
-
-    return grafo;
-}
-
-static grafo_t* adicionarAresta(grafo_t* grafo, int origem, int destino){
-    nodo_t* nodo = criaNodo(destino);
-    nodo->next = grafo->listaAdj[origem];
-    grafo->listaAdj[origem] =  nodo;
-
-    nodo = criaNodo(origem);
-    nodo->next = grafo->listaAdj[destino];
-    grafo->listaAdj[destino] = nodo;
-}
-
-static void printGrafo(grafo_t* grafo){
-    for(int i = 0; i < grafo->numVertices; i++){
-        nodo_t* aux = grafo->listaAdj[i];
-        printf("\n Vertice %d\n: ", i);
-        while(aux){
-            printf("%d -> ", aux->vertice);
-            aux = aux->next;
-  
-        }
-        printf("\n");
-    }
-}
-
+#define uint unsigned int
 
 /*
  * Checa se a posição está proibida
@@ -143,6 +92,121 @@ static unsigned int *rainhas_bt_wrapped(unsigned int n, unsigned int *r, int ll,
 //##############################################################################
 
 
+/*
+ * Struct da fila
+ */
+typedef struct queue_t {
+    struct queue_t *next ;
+    struct nodo_t *points ;
+} queue_t ;
+
+/*
+* Struct do nodo
+*/
+typedef struct nodo_t {
+    struct queue_t *adj ;
+    uint l, c ;
+    short valid, percorrido ;
+} nodo_t;
+
+
+static void print_fila(nodo_t* n){
+    queue_t *aux = n->adj ;
+    if(!aux) return ;
+    while(aux){
+        printf("->[%d][%d]", aux->points->l, aux->points->c) ;
+        aux = aux->next ;
+    }
+}
+
+/*
+ * Printa o grafo
+ */
+static void print_graph(nodo_t *g, int n){
+    for(int i = 0; i<n*n; i++){
+        printf("[%d][%d]", g[i].l, g[i].c) ;
+        print_fila(&g[i]) ;
+        printf("\n") ;
+    }
+}
+//##############################################################################
+
+
+
+static nodo_t *init_nodo_t(nodo_t* nodo, uint l, uint c) {
+    nodo->l = l ;
+    nodo->c = c ;
+    nodo->valid = 1 ;
+    nodo->percorrido = 0 ;
+    nodo->adj = NULL ;
+    return nodo ;
+}
+
+static queue_t *init_queue_t(nodo_t* points){
+    queue_t* queue_node = (queue_t *) malloc(sizeof(queue_t)) ;
+    queue_node->points = points ;
+    queue_node->next = NULL ;
+    return queue_node ;
+}
+static void queue_append(nodo_t* head, queue_t* elem){
+    elem->next = head->adj ;
+    head->adj = elem ;
+}
+
+
+/*
+ * Adiciona casas atacadas de acordo com a distância
+ * Retorna número de arestas criadas
+ */
+static int add_by_distance(int i, int j, nodo_t* g, int d, int n){
+    int edges = 0 ;
+
+    for(int iaux = -d; iaux<= +d; iaux+=d){
+        if(i+iaux < 0 || i+iaux >= n) continue ;
+        for(int jaux = -d; jaux <= d; jaux+=d){
+            if(j+jaux < 0 || j+jaux >= n) continue ;
+            if(jaux == 0 && iaux == 0) continue ;
+            nodo_t* nodo_aux1 = &g[(i*n) + j] ;
+            nodo_t* nodo_aux2 = &g[((i+iaux)*n) + (j+jaux)] ;
+            if(nodo_aux2->percorrido) continue ;
+
+            queue_t* queue_aux1 = init_queue_t(nodo_aux1) ;
+            queue_t* queue_aux2 = init_queue_t(nodo_aux2) ;
+
+            queue_append(nodo_aux1, queue_aux2) ;
+            queue_append(nodo_aux2, queue_aux1) ;
+            edges++ ;
+        }
+    }
+    g[i*n + j].percorrido = 1 ;
+    return edges ;
+}
+//##############################################################################
+
+
+/*
+ * Cria uma representação do tabuleiro com uma lista de adjacência
+ */
+static nodo_t* init_graph(int n){
+    nodo_t *graph = (nodo_t *) malloc(n*n * sizeof(nodo_t)) ;
+    // Inicia todos os nodos do vetor principal
+    for(int i = 0; i<n*n; i++){
+        nodo_t* aux = &graph[i] ;
+        init_nodo_t(aux, i/n, i%n) ;
+    }
+
+    for(int i = 0; i<n; i++){
+        for(int j = 0; j<n; j++){
+            for(int d = 1; d < n; d++){
+                add_by_distance(i, j, graph, d, n) ;
+            }
+        }
+    }
+
+    return graph ;
+}
+//##############################################################################
+
 
 //------------------------------------------------------------------------------
 // computa uma resposta para a instância (n,c) do problema das n rainhas 
@@ -154,7 +218,7 @@ static unsigned int *rainhas_bt_wrapped(unsigned int n, unsigned int *r, int ll,
 //
 //    r é um vetor de n posições (já alocado) a ser preenchido com a resposta:
 //      r[i] = j > 0 indica que a rainha da linha i+1 fica na coluna j;
-//      r[i] = 0     indica que não há rainha nenhuma na linha i+1
+//      r[i] = 0     indica que nã0x35o há rainha nenhuma na linha i+1
 //
 // devolve r
 unsigned int *rainhas_bt(unsigned int n, unsigned int k, casa *c, unsigned int *r) {
@@ -181,17 +245,7 @@ unsigned int *rainhas_bt(unsigned int n, unsigned int k, casa *c, unsigned int *
 //
 // n, c e r são como em rainhas_bt()
 unsigned int *rainhas_ci(unsigned int n, unsigned int k, casa *c, unsigned int *r) {
-    grafo_t* g = criaGrafo(4);
-    adicionarAresta(g, 0, 1);
-    adicionarAresta(g, 0, 2);
-    adicionarAresta(g, 0, 3);
-    adicionarAresta(g, 1, 2);
-
-    printGrafo(g);
-
-    n = n;
-    k = k;
-    c = c;
-
-  return r;
+    nodo_t* graph = init_graph((int) n) ;
+    print_graph(graph, (int) n) ;
+    return r;
 }

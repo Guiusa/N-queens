@@ -69,7 +69,6 @@ int main (void) {
   CRONOMETRA(rainhas_bt(n, k, proibido, resposta), tempo_bt);
   printf("%ld\n", tempo_bt);
   mostra_resposta(n, resposta);
-  */
 
   printf("grafo: ");
   long int tempo_ci;
@@ -77,7 +76,8 @@ int main (void) {
   printf("%ld\n", tempo_ci);
   mostra_resposta(n, resposta);
   // printf("%.2f\n", (double)tempo_ci/(double)tempo_bt);
-  
+    */
+  rainhas_ci(n, k, proibido, resposta) ;
 
   free(proibido);
   free(resposta);
