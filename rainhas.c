@@ -4,6 +4,7 @@
 #include <string.h>
 #define uint unsigned int
 
+char BUFF[] = "                              " ;
 
 
 /*
@@ -331,7 +332,6 @@ static int sets_queue(nodo_t* sol, short n){
 
             q->points->valid = 0 ;
             q->points->proibiu = sol ;
-            
             c++ ;
         }
     } else {
@@ -371,41 +371,45 @@ static uint *rainhas_ci_wrapped(int n,
         *best = q ;
         return r ;
     }
+
     // Não pode ser a melhor solução, retorna NULL
-    if(q + tam_c < n) return NULL ;
-    if(q + tam_c < *best) return NULL ;
-
+    if(q + tam_c <= *best) return NULL ;
+    
     nodo_t *v = NULL;
-
     // Itera sobre os nodos disponíveis em C
     for(int i = 0; i<n*n; i++){
-        if(g[i].valid!=1) continue ;
-
-        v = &g[i] ;
-
-        // Seta todos os vizinhos do nodo escolhido para inválido
-        tam_c -= sets_queue(v, 0) ;
-        v->valid = 2 ;
-        tam_c--;
-
-        // Coloca a rainha e chama a recursão
-        r[v->l-1] = v->c ;
-        uint *r1 = rainhas_ci_wrapped(n, r, r2, q+1, tam_c, best, g) ;
-        if(r1) return r1 ;
-
-        // Se falhou esse braço, reseta a vizinhança e vai pro próximo
-        tam_c += sets_queue(v, 1) ;
-
-        v->valid = 1 ;
-        tam_c ++ ;
-        r[v->l-1] = 0 ;
+        if(g[i].valid==1){
+            v = &g[i] ;
+            break ;
+        }
     }
-    // Solução parcial
+    if(!v) return NULL ;
+    
+    // Seta todos os vizinhos do nodo escolhido para inválido
+    tam_c -= sets_queue(v, 0) ;
+    v->valid = 2 ;
+    tam_c--;     
+
+    // Coloca a rainha e chama a recursão
+    r[v->l-1] = v->c ;
+
     if(q > *best){
         *best = q ;
         memcpy(r2, r, n*sizeof(uint)) ;
     }
 
+    uint *r1 = rainhas_ci_wrapped(n, r, r2, q+1, tam_c, best, g) ;
+
+    if(r1) return r1 ;
+
+    // Se falhou esse braço, reseta a vizinhança e vai pro próximo
+    tam_c += sets_queue(v, 1) ;
+
+    r1 = rainhas_ci_wrapped(n, r, r2, q, tam_c, best, g) ;
+    if(r1) return r1 ;
+    v->valid = 1 ;
+    r[v->l-1] = 0 ;
+    tam_c ++ ;
     return NULL ;
 }
 
@@ -421,7 +425,7 @@ uint *rainhas_ci(uint n, uint k, casa *c, uint *r) {
 
     int best = 0 ;
     uint *r2 = calloc(n, sizeof(uint)) ;
-    uint *r1 = rainhas_ci_wrapped((int) n, r, r2, 0, n*n, &best, graph) ; 
+    uint *r1 = rainhas_ci_wrapped((int) n, r, r2, 0, n*n-k, &best, graph) ; 
     
     if (!r1) memcpy(r, r2, n*sizeof(uint)) ;
 

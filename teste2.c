@@ -63,20 +63,20 @@ int main (void) {
   //proibe_linha(n, proibido) ;
   proibe_diagonais(n, proibido) ;
 
-
   printf("backtracking: ");
   long int tempo_bt;
   CRONOMETRA(rainhas_bt(n, k, proibido, resposta), tempo_bt);
   printf("%ld\n", tempo_bt);
   mostra_resposta(n, resposta);
 
+  free(resposta) ;
+  resposta = calloc(n, sizeof(unsigned int)) ;
 
   long int tempo_ci;
   CRONOMETRA(rainhas_ci(n, k, proibido, resposta), tempo_ci);
   printf("%ld\n", tempo_ci);
   mostra_resposta(n, resposta);
-  //printf("%.2f\n", (double)tempo_ci/(double)tempo_bt);
-  //rainhas_ci(n, k, proibido, resposta) ;
+  printf("%.2f\n", (double)tempo_ci/(double)tempo_bt);
 
   free(proibido);
   free(resposta);

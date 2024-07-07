@@ -49,13 +49,13 @@ int main (void) {
 
   proibe_diagonais(n, proibido);
 
- /*
+
   printf("backtracking: ");
   long int tempo_bt;
   CRONOMETRA(rainhas_bt(n, k, proibido, resposta), tempo_bt);
   printf("%ld\n", tempo_bt);
   mostra_resposta(n, resposta);
- */
+
 
   printf("grafo: ");
   long int tempo_ci;
