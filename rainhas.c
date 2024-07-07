@@ -135,13 +135,23 @@ uint *rainhas_bt(uint n, uint k, casa *c, uint *r) {
 
 /*
  * Struct da fila
+ *  - next      Próximo elemento queue_t da fila que está inserido
+ *  - points    Endereço do nodo que esse elemento da fila referencia, ou seja,
+ *  qual casa do tabuleiro que é vizinho
  */
 typedef struct queue_t {
     struct queue_t *next ;
     struct nodo_t *points ;
 } queue_t ;
+
 /*
 * Struct do nodo
+*  - adj        Fila de casas que são adjacentes ao nodo
+*  - proibiu    Qual nodo que o retirou do vetor C (necessário na recursão)
+*  - l, c       Coordenadas da casa
+*  - valid      Se o nodo pode ser escolhido
+*  - percorrido Usado para percorrer os nodos ao criar as listas de adjacência
+*  - vizinhos   Quantos vizinhos tem no nodo
 */
 typedef struct nodo_t {
     struct queue_t *adj ;
@@ -151,35 +161,7 @@ typedef struct nodo_t {
     int vizinhos ;
 } nodo_t ;
 
-
-
-/*
- * Printa os elementos enfileirados nas filas de adjacência
- */
-static void print_fila(nodo_t* n){
-    queue_t *aux = n->adj ;
-    if(!aux) return ;
-    while(aux){
-        printf("->[%d][%d]", aux->points->l, aux->points->c) ;
-        aux = aux->next ;
-    }
-}
-//##############################################################################
-
-
-
-/*
- * Printa o grafo
- */
-static void print_graph(nodo_t *g, int n){
-    for(int i = 0; i<n*n; i++){
-        printf("%d\t", g[i].vizinhos) ;
-        printf("\e[0;31m[%d][%d]\e[0m", g[i].l, g[i].c) ;
-        print_fila(&g[i]) ;
-        printf("\n") ;
-    }
-}
-//##############################################################################
+nodo_t proibidor ;
 
 
 
@@ -269,11 +251,10 @@ static int add_by_distance(int i, int j, nodo_t* g, int d, int n){
 /*
  * Coloca os nodos proibidos como inválidos
  */
-static int map_ci(casa *c, int k, uint n, nodo_t* nodes){
-    nodo_t proibidor ;
+static void map_ci(casa *c, int k, int n, nodo_t* nodes){
     for(int l = 0; l<k; l++){
-        int i = c[l].linha -1;
-        int j = c[l].coluna -1;
+        int i = (int) c[l].linha -1;
+        int j = (int) c[l].coluna -1;
         nodes[(i*n) + j].valid = 0 ;
         nodes[(i*n) + j].proibiu = &proibidor ;
     }
@@ -282,15 +263,16 @@ static int map_ci(casa *c, int k, uint n, nodo_t* nodes){
  * Cria uma representação do tabuleiro com uma lista de adjacência
  */
 static nodo_t* init_graph(int n){
-    nodo_t *graph = (nodo_t *) malloc(n*n * sizeof(nodo_t)) ;
+    long uint n2 = (uint) n* (uint) n ;
+    nodo_t *graph = (nodo_t *) malloc(n2 * sizeof(nodo_t)) ;
     // Inicia todos os nodos do vetor principal
-    for(int i = 0; i<n*n; i++){
+    for(uint i = 0; i<n*n; i++){
         nodo_t* aux = &graph[i] ;
-        init_nodo_t(aux, i/n+1, i%n+1) ;
+        init_nodo_t(aux, i/(uint) n+1, i%(uint) n+1) ;
     }
 
     for(int i = 0; i<n; i++){
-        for(int j = 0; j<n; j++){
+        for(int j = 0; j<(int) n; j++){
             for(int d = 1; d < n; d++){
                 add_by_distance(i, j, graph, d, n) ;
             }
@@ -383,30 +365,33 @@ static uint *rainhas_ci_wrapped(int n,
             break ;
         }
     }
-    if(!v) return NULL ;
+    if(!v) return NULL ; // Se não achou nenhum, retorna null
     
     // Seta todos os vizinhos do nodo escolhido para inválido
     tam_c -= sets_queue(v, 0) ;
     v->valid = 2 ;
     tam_c--;     
 
-    // Coloca a rainha e chama a recursão
+    // Coloca a rainha
     r[v->l-1] = v->c ;
 
+    // Checa se se está na maior solução
     if(q > *best){
         *best = q ;
-        memcpy(r2, r, n*sizeof(uint)) ;
+        memcpy(r2, r, (uint) n*sizeof(uint)) ;
     }
 
+    // Chama a recursão com v no CI
     uint *r1 = rainhas_ci_wrapped(n, r, r2, q+1, tam_c, best, g) ;
-
     if(r1) return r1 ;
 
-    // Se falhou esse braço, reseta a vizinhança e vai pro próximo
-    tam_c += sets_queue(v, 1) ;
 
+    // Se falhou, v não pertence a CI, chama a recursão de novo
+    tam_c += sets_queue(v, 1) ;
     r1 = rainhas_ci_wrapped(n, r, r2, q, tam_c, best, g) ;
     if(r1) return r1 ;
+
+    // Se falhou, reseta v e pede outra instância pra nível de cima
     v->valid = 1 ;
     r[v->l-1] = 0 ;
     tam_c ++ ;
@@ -421,11 +406,11 @@ static uint *rainhas_ci_wrapped(int n,
 // n, c e r são como em rainhas_bt()
 uint *rainhas_ci(uint n, uint k, casa *c, uint *r) {
     nodo_t* graph = init_graph((int) n) ;
-    map_ci(c, k, n, graph) ;
+    map_ci(c, (int) k, (int) n, graph) ;
 
     int best = 0 ;
     uint *r2 = calloc(n, sizeof(uint)) ;
-    uint *r1 = rainhas_ci_wrapped((int) n, r, r2, 0, n*n-k, &best, graph) ; 
+    uint *r1 = rainhas_ci_wrapped((int) n, r, r2, 0, (int) (n*n-k), &best, graph) ; 
     
     if (!r1) memcpy(r, r2, n*sizeof(uint)) ;
 

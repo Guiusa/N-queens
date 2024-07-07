@@ -1,4 +1,4 @@
-OMMON_FLAGS = -pipe \
+COMMON_FLAGS = -pipe \
 	       -ggdb3 -Wstrict-overflow=5 -fstack-protector-all \
 	       -W -Wall -Wextra \
 	       -Wcast-align \
@@ -42,20 +42,17 @@ CPPFLAGS = $(COMMON_FLAGS)
 .PHONY : all clean
 
 #------------------------------------------------------------------------------
-all : teste teste2
+all : teste
 
-rainhas.o teste.o teste2.o : %.o : %.c
+rainhas.o teste.o : %.o : %.c
 	$(CC) -c $(CFLAGS) -o $@ $^
 
 # rainhas.o : rainhas.cpp
 # 	$(CC) -c $(CPPFLAGS) -o $@ $^
 
 teste : teste.o rainhas.o
-	$(CC) $(CFLAGS) -o $@  $^
-
-teste2: teste2.o rainhas.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 #------------------------------------------------------------------------------
 clean :
-	$(RM) *.o teste teste2
+	$(RM) teste *.o

@@ -85,4 +85,79 @@
 ┃       ┃       ┃ SEM PODA  ┃ COM PODA ┃                                       ┃
 ┃       ┃CLOCKS ┃ 2748892   ┃ 6567     ┃                                       ┃
 ┃       ┗━━━━━━━┻━━━━━━━━━━━┻━━━━━━━━━━┛                                       ┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+┃                           CONJUNTO INDEPENDENTE                              ┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+┃ 1. FUNÇÃO WRAPPER                                                            ┃
+┃       A função rainhas_ci assinada em rainhas.h é um wrapper para a recursão ┃
+┃ com conjuntos independentes.                                                 ┃
+┃       Semelhante ao feito com a função com backtracking, um vetor auxiliar   ┃
+┃ também é alocado para tratar os casos de soluções incompletas, de forma que  ┃
+┃ se o algoritmo devolver "NÃO", o vetor auxiliar é copiado para o vetor       ┃
+┃ resposta.                                                                    ┃
+┃       A rotina também realiza operações com o vetor de casas proibidas a fim ┃
+┃ de otimizar checagens, isso será discutido na sessão de otimizações.         ┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+┃ 2. ESTRUTURAS DE DADO                                                        ┃
+┃       Para implementar as listas de adjacência, foram criadas duas estruturas┃
+┃ de dados que juntas representam o estado de um grafo, são elas:              ┃
+┃                                                                              ┃
+┃       ```C                                                                   ┃
+┃           /*                                                                 ┃
+┃           * Struct da fila                                                   ┃ 
+┃           */                                                                 ┃  
+┃           typedef struct queue_t {                                           ┃
+┃               struct queue_t *next ;                                         ┃
+┃               struct nodo_t *points ;                                        ┃
+┃           } queue_t ;                                                        ┃ 
+┃                                                                              ┃     
+┃           /*                                                                 ┃
+┃           * Struct do nodo                                                   ┃
+┃           */                                                                 ┃
+┃           typedef struct nodo_t {                                            ┃
+┃               struct queue_t *adj ;                                          ┃
+┃               struct nodo_t *proibiu ;                                       ┃
+┃               uint l, c ;                                                    ┃
+┃               short valid, percorrido ;                                      ┃
+┃               int vizinhos ;                                                 ┃
+┃           } nodo_t ;                                                         ┃ 
+┃       ```                                                                    ┃
+┃                                                                              ┃
+┃       As structs do tipo nodo estão no vetor principal que representa as     ┃
+┃ casas do tabuleiro, enquanto as structs do tipo queue são posições na fila de┃
+┃ vértices adjacentes em cada nodo.                                            ┃
+┃       A explicação exata de cada componente está comentada no código fonte.  ┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+┃ 3. REPRESENTAÇÃO                                                             ┃
+┃       A função rainhas_ci cria um grafo usando a função init_graph.          ┃
+┃       O correspondete a um tabuleiro 3x3 criado usando essa funçaõ seria:    ┃
+┃                                                                              ┃
+┃  ┏━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓┃
+┃  ┃ NODO_T ┃                        QUEUE_T                                  ┃┃
+┃  ┣━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫┃
+┃  ┃ [1][1] ┃->[1][2]->[1][3]->[2][1]->[2][2]->[3][1]->[3][3]                 ┃┃
+┃  ┃ [1][2] ┃->[1][1]->[1][3]->[2][1]->[2][2]->[2][3]->[3][2]                 ┃┃
+┃  ┃ [1][3] ┃->[1][1]->[1][2]->[2][2]->[2][3]->[3][1]->[3][3]                 ┃┃
+┃  ┃ [2][1] ┃->[1][1]->[1][2]->[2][2]->[2][3]->[3][1]->[3][2]                 ┃┃
+┃  ┃ [2][2] ┃->[1][1]->[1][2]->[1][3]->[2][1]->[2][3]->[3][1]->[3][2]->[3][3] ┃┃
+┃  ┃ [2][3] ┃->[1][2]->[1][3]->[2][1]->[2][2]->[3][2]->[3][3]                 ┃┃ 
+┃  ┃ [3][1] ┃->[1][1]->[3][3]->[2][1]->[2][2]->[3][2]->[3][3]                 ┃┃
+┃  ┃ [3][2] ┃->[1][2]->[2][1]->[2][2]->[2][3]->[3][1]->[3][3]                 ┃┃
+┃  ┃ [3][3] ┃->[1][1]->[1][3]->[2][2]->[2][3]->[3][1]->[3][2]                 ┃┃
+┃  ┗━━━━━━━━┻━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+┃ 4. OTIMIZAÇÕES                                                               ┃
+┃       4.1 CASAS PROIBIDAS                                                    ┃
+┃       Da mesma forma que feito no backtracking, a função rainhas_ci chama uma┃
+┃ função que mapeia as casas proibidas para a instância usada, no caso, como a ┃
+┃ struct nodo_t tem um campo que diz se a casa é valida, basta percorrer o     ┃
+┃ vetor de casas proibidas setando os nodos correspondentes para inválido.     ┃      
+┃                                                                              ┃
+┃       4.2 PODA                                                               ┃
+┃       A função mantém o tamanho da melhor solução encontrada, caso um galho  ┃
+┃ da árvore de solução tenha uma instância que não consigo chegar à melhor, ele┃
+┃ é podado:                                                                    ┃
+┃       ```C                                                                   ┃
+┃           if(q + tam_c <= *best) return NULL ;                               ┃
+┃       ```                                                                    ┃
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
